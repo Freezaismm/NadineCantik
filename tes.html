@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The journey to get long text ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Pacifico&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        :root { --primary: #1e40af; --secondary: #3b82f6; --bg: #f0f9ff; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { margin: 0; background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* Animasi Transisi */
+        .fade-in { animation: fadeIn 0.5s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .bubble { position: absolute; bottom: -50px; background: rgba(255,255,255,0.4); border-radius: 50%; animation: rise 6s infinite ease-in; pointer-events: none; z-index: 0; }
+        @keyframes rise { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100vh); opacity: 0; } }
+        .f-heart { position: fixed; bottom: -20px; opacity: 0; transition: 4s linear; pointer-events: none; z-index: 99; }
+
+        .container { width: 92%; max-width: 380px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); padding: 30px; border-radius: 40px; text-align: center; box-shadow: 0 20px 50px rgba(30, 64, 175, 0.15); border: 1px solid #fff; position: relative; z-index: 10; max-height: 90vh; overflow-y: auto; }
+        h2 { font-family: 'Pacifico', cursive; color: var(--primary); margin: 0; font-size: 20px; }
+        p { font-size: 13px; color: #64748b; margin: 15px 0 20px 0; line-height: 1.6; }
+        
+        .game-box { min-height: 200px; background: #f8fafc; border-radius: 30px; position: relative; overflow: hidden; border: 1px solid #edf2f7; margin-bottom: 20px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 20px; font-weight: 700; width: 100%; cursor: pointer; transition: 0.3s; }
+        .btn-run { background: #fff; color: #333; border: 1px solid #ddd; position: relative; }
+
+        .profile-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary); margin-bottom: 15px; }
+        .hidden { display: none !important; }
+
+        #maze { width: 100%; height: 180px; background: #e0f2fe; position: relative; border-radius: 20px; overflow:hidden; }
+        .wall { position: absolute; background: #bae6fd; width: 100%; height: 45px; left: 0; border: 2px solid #7dd3fc; }
+        #player { position: absolute; width: 35px; height: 35px; font-size: 24px; z-index: 10; pointer-events: none; display:flex; align-items:center; justify-content:center; }
+        #goal { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 28px; }
+
+        .star-falling { position: absolute; font-size: 24px; transition: top 2.5s linear; cursor: pointer; }
+        #typewriter, #breakMsg { font-size: 13px; text-align: left; line-height: 1.6; color: #334155; white-space: pre-wrap; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop><source src="https://files.catbox.moe/42hxym.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-pop"><source src="https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3" type="audio/mpeg"></audio>
+    <audio id="sfx-win"><source src="https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3" type="audio/mpeg"></audio>
+
+    <div class="container fade-in" id="mainCard">
+        <div id="lvl1">
+            <img src="https://img.sanishtech.com/u/1591052d6372f1b37196891426e795c3.jpg" class="profile-img"> 
+            <h2>Thanks For Today Sayang</h2>
+            <p>sebelum kamu dapett longtekss biar ga bosen main dulu yukk... 💙</p>
+            <button class="btn-main" onclick="startApp()">Let's start ✨</button>
+        </div>
+
+        <div id="break" class="hidden">
+            <div style="font-size: 40px; margin-bottom: 10px;">🩵</div>
+            <h2 id="breakTitle">Proud of uu!</h2>
+            <div id="breakMsg"></div>
+            <button class="btn-main" id="btnNext" style="margin-top:20px">Lanjut Sayang ❤️</button>
+        </div>
+
+        <div id="lvl2" class="hidden">
+            <h2>Selamatkan kucinknyaa</h2>
+            <p>Selamatkan 5 kucinkk. Jangann sampe kena buayaa!</p>
+            <div id="z2" class="game-box" style="display:flex; align-items:flex-end; justify-content:center;">
+                <div id="basket" style="position:absolute; bottom:15px; width:75px; height:12px; background:var(--primary); border-radius:10px;"></div>
+            </div>
+            <p id="s2" style="font-weight:800; color:var(--primary)">Skor: 0/5</p>
+        </div>
+
+        <div id="lvl3" class="hidden">
+            <h2>Tes memori</h2>
+            <p>Aku yakin kamu jagoo</p>
+            <div class="game-box" style="gap:20px; flex-direction:row; display:flex; align-items:center; justify-content:center;">
+                <div id="p1" onclick="tapPattern(1)" style="width:70px; height:70px; background:#e2e8f0; border-radius:50%"></div>
+                <div id="p2" onclick="tapPattern(2)" style="width:70px; height:70px; background:#e2e8f0; border-radius:50%"></div>
+            </div>
+            <button class="btn-main" id="l3Btn" onclick="startL3()" style="margin-top:15px">Lihat Pola</button>
+        </div>
+
+        <div id="lvl4" class="hidden">
+            <h2>Falling Stars</h2>
+            <p>Tangkap bintang yang bersinarr!</p>
+            <div id="z4" class="game-box" style="background:#0f172a"></div>
+            <p id="s4" style="font-weight:800; color:#fbbf24">Bintang: 0/8</p>
+        </div>
+
+        <div id="lvl5" class="hidden">
+            <h2>Takut Pulang</h2>
+            <p>Anterin ak pulang plisss</p>
+            <div id="maze" onmousemove="handleMaze(event)" ontouchmove="handleMaze(event)">
+                <div class="wall" style="top:0"></div><div class="wall" style="bottom:0"></div>
+                <div id="player">🧒🏽</div><div id="goal">🏠</div>
+            </div>
+        </div>
+
+        <div id="lvl6" class="hidden">
+            <h2>The truth</h2>
+            <p>Siapa yang lebih nyebelin</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-main" onclick="showBreak('I Knew It!', 'WKWKWKWK AK TAUU KO AK NYEBELINN', 7)">️Eza O⁠_⁠o</button>
+                <button class="btn-main btn-run" id="btn-no" onmouseover="moveNo()" onclick="moveNo()">Nadine ^⁠_⁠^</button>
+            </div>
+        </div>
+
+        <div id="lvl7" class="hidden">
+            <h2>PIN</h2>
+            <p>Seberapa besar sayang kamu ke ak?</p>
+            <input type="number" id="pin" style="font-size:32px; width:130px; text-align:center; border:none; border-bottom:3px solid var(--primary); outline:none; background:transparent;">
+            <button class="btn-main" onclick="checkFinal()" style="margin-top:20px">Buka Hatiku 💙</button>
+        </div>
+
+        <div id="final" class="hidden">
+            <img src="https://img.sanishtech.com/u/048cd87f994ed93d4987a3ecd0c74f10.jpg" class="profile-img"> 
+            <div id="typewriter"></div>
+            <button class="btn-main" style="margin-top:20px" onclick="location.reload()">Main Lagi? 💙</button>
+        </div>
+    </div>
+
+    <script>
+        let cur = 1; let gameIntervals = []; let typeInterval;
+        const playSfx = (id) => { const s = document.getElementById(id); s.currentTime = 0; s.play().catch(()=>{}); };
+
+        function runTypewriter(targetId, text) {
+            const el = document.getElementById(targetId);
+            el.innerHTML = "";
+            let i = 0;
+            clearInterval(typeInterval);
+            typeInterval = setInterval(() => {
+                if (i < text.length) {
+                    el.innerHTML += text.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, 30);
+        }
+
+        setInterval(() => {
+            const b = document.createElement('div'); b.className = 'bubble';
+            const size = Math.random()*20 + 10 + 'px';
+            b.style.width = size; b.style.height = size; b.style.left = Math.random()*100+'%';
+            document.body.appendChild(b); setTimeout(() => b.remove(), 6000);
+        }, 1000);
+
+        function startApp() { document.getElementById('bgm').play().catch(()=>{}); nextLvl(2); }
+
+        function showBreak(title, msg, next) {
+            gameIntervals.forEach(clearInterval); gameIntervals = [];
+            document.querySelectorAll('#z2 div:not(#basket), #z4 div').forEach(e => e.remove());
+            playSfx('sfx-win');
+            
+            document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+            const card = document.getElementById('mainCard');
+            card.classList.remove('fade-in');
+            void card.offsetWidth; 
+            card.classList.add('fade-in');
+
+            document.getElementById('break').classList.remove('hidden');
+            document.getElementById('breakTitle').innerText = title;
+            runTypewriter('breakMsg', msg);
+            document.getElementById('btnNext').onclick = () => nextLvl(next);
+        }
+
+        function nextLvl(n) {
+            document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+            const card = document.getElementById('mainCard');
+            card.classList.remove('fade-in');
+            void card.offsetWidth;
+            card.classList.add('fade-in');
+
+            const target = (n === 'final') ? document.getElementById('final') : document.getElementById('lvl' + n);
+            target.classList.remove('hidden'); cur = n;
+            if(n === 2) initL2(); if(n === 4) initL4(); if(n === 5) initL5();
+        }
+
+        // --- GAMES LOGIC ---
+        function initL2() {
+            let s = 0; const z = document.getElementById('z2'), b = document.getElementById('basket');
+            z.onmousemove = z.ontouchmove = (e) => {
+                let r = z.getBoundingClientRect();
+                let x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+                b.style.left = Math.min(Math.max(x - 37, 0), r.width - 75) + 'px';
+            };
+            let sp = setInterval(() => {
+                let isB = Math.random() > 0.8; let h = document.createElement('div');
+                h.innerHTML = isB ? '🐊' : '😿'; h.style.cssText = `position:absolute; top:0; left:${Math.random()*85}%; font-size:24px; transition:2.5s linear;`;
+                z.appendChild(h); setTimeout(() => h.style.top = '220px', 50);
+                setTimeout(() => {
+                    let br = b.getBoundingClientRect(), hr = h.getBoundingClientRect();
+                    if(hr.left > br.left - 15 && hr.left < br.right + 15 && cur === 2) {
+                        if(isB) { s = 0; alert('Yah kena mam dehh!'); }
+                        else { s++; playSfx('sfx-pop'); }
+                        document.getElementById('s2').innerText = `Skor: ${s}/5`;
+                        if(s >= 5) showBreak("SO COOL", "Kamu selalu jadii penyelamatt bagii semuanyaa yaaa, timakasii yaa udaa jadii orang yang pedulii terhadap sekitarr, kamu tuhh kerenn bangett sayangg selaluu mikirin orang lain jugaa, aku salur bangett sama kamu yang selaluu nyenengin orang lainn, tapii jangan lupaa nyenengin diri mu sendiri dulu yaa sayangg!!. veryy proud of uuu, semogaa orang yang kamu bantuu selalu ingatt apa yang kamu lakuinn yaa seperti kamu mengingat game berikutt .", 3);
+                    } h.remove();
+                }, 2500);
+            }, 1000); gameIntervals.push(sp);
+        }
+
+        let ptn = [], uPtn = [];
+        function startL3() {
+            ptn = [Math.ceil(Math.random()*2), Math.ceil(Math.random()*2), Math.ceil(Math.random()*2)];
+            uPtn = []; document.getElementById('l3Btn').style.display = 'none';
+            ptn.forEach((p, i) => { setTimeout(() => {
+                document.getElementById('p'+p).style.background = 'var(--secondary)'; playSfx('sfx-pop');
+                setTimeout(() => document.getElementById('p'+p).style.background = '#e2e8f0', 500);
+            }, i * 800); });
+        }
+        function tapPattern(v) {
+            uPtn.push(v); playSfx('sfx-pop');
+            if(uPtn[uPtn.length-1] !== ptn[uPtn.length-1]) { alert('Its okeyy sayangg'); startL3(); }
+            else if(uPtn.length === ptn.length) showBreak("TUHH KANN", "Aku percayaa dengan ingatan kamu kooo, selaluu pinterr di setiap waktuu dehhh. ngomong ngomong soal mengingatt, fathann bakal selaluu ingett semua kebaikan yang kamu lakuinn, fathan jugaa ga bakal lupaa apapunn hal tentang kamuu. tetapp bersinarr bagaikan bintang di langitt yaa sayanggg", 4);
+        }
+
+        function initL4() {
+            let s = 0; const z = document.getElementById('z4');
+            let sp = setInterval(() => {
+                const i = document.createElement('div'); i.className = 'star-falling'; i.innerHTML = '⭐';
+                i.style.left = Math.random()*85 + '%'; i.style.top = '-30px'; z.appendChild(i);
+                setTimeout(() => i.style.top = '220px', 50);
+                i.onclick = () => { s++; playSfx('sfx-pop'); i.remove();
+                    document.getElementById('s4').innerText = `Bintang: ${s}/8`;
+                    if(s >= 8) showBreak("Nadine so shining", "Kamu tuhh kaya bintang di langit sayangg Selalu bersinar untuk menerangu hari hariku yang gelap iniii, bayanginn se sepi dan segelap apaa hidup fathann kalau gaada kamuu sayangg, kamuu selalu jadii cahayaa bagi hidupkuu, selalu menjadi jalann atas segala kebingungankuu.. kamu jugaa selaluu membawaku pulangg ke rumahh, yaituu kamu, yakk kamu adalah rumahkuu. tapi anterin pulang dulu dong hehe", 5);
+                };
+                setTimeout(() => i.remove(), 2550);
+            }, 900); gameIntervals.push(sp);
+        }
+
+        function initL5() { document.getElementById('player').style.left = '10px'; document.getElementById('player').style.top = '72px'; }
+        function handleMaze(e) {
+            if(cur !== 5) return; const r = document.getElementById('maze').getBoundingClientRect();
+            const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+            const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+            const p = document.getElementById('player'); p.style.left = (x-17)+'px'; p.style.top = (y-17)+'px';
+            if(y < 45 || y > 135) { p.style.left='10px'; p.style.top='72px'; playSfx('sfx-pop'); }
+            if(x > 320) showBreak("Alhamdulillah sampaaiiii", "Timakasii yaa udaa nganterinn aku sampe rumaaa, yaa rumah itu bagaikan kamuu, yang selalu memberikanku tempat yang aman dan nyamann untuk di jadikan tempat pulangg, makasihh yaa yang udaa selalu adaa buat akuu, selalu bisa buat aku senengg, bisa membuat aku sangat amat merasa di sayanggg walaupun aku sendirii jugaa yaa begitulahh yaaa..", 6);
+        }
+
+        function moveNo() {
+            const b = document.getElementById('btn-no');
+            b.style.transform = `translate(${Math.random()*160-80}px, ${Math.random()*100-50}px)`;
+        }
+
+        function checkFinal() {
+            if(document.getElementById('pin').value == "100") {
+                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                nextLvl('final');
+                setInterval(() => {
+                    const h = document.createElement('div'); h.className = 'f-heart';
+                    h.innerHTML = ['💙','✨','💖'][Math.floor(Math.random()*3)];
+                    h.style.left = Math.random()*100+'%'; document.body.appendChild(h);
+                    setTimeout(() => { h.style.bottom='110%'; h.style.opacity='1'; }, 50);
+                    setTimeout(() => h.remove(), 4000);
+                }, 400);
+                runTypewriter('typewriter', "Yeyy akhirnyaa sampai di longtekss 💙\n\nMakasih yaa udaa sabarr maininnyaa demi bisaa baca longteksnyaa wkwkkwwk, maaff yaa malah ngrepotin kamuu tapi semoga kamu sukaa dehh.\n\nTimakasii banyakk yaa buat harii iniii, makasihh udaa nemeninn fathann nihhh sehariann, walaupun aku banyak dramatisnyaa banyak ngeselinnyaa tapi kamu masii sabarr dalam nemeninn akuuu. wahh kitaa juga first time chatann di fb yaaa sayangg wkwkwkwk, seruu bangett dee bisa banyak ceritaa di fb, bisaa deeptalk jugaa. jadi aku lebih tauu kamu dan kamu lebih tauu aku jugaa, makasihh banyakk yaa pokoonyaa buat hari iniii. aku juga senengg kamu izinin dan support aku yang ingin memulai bisnis disinii. ak jugaa sukaa bangett dengan apresiasmuu tadii pagiii. terimakasihh banyakk yaa pokoknyaaaa.. \n\n yasudaaa selamaatt beristirahatt yaa sayanggg, boboo yang nyenyakk yaaa.. mimpiin aku lagi kalau bisaa yaa sayangg wkwkwk, semogaa besok kita bisa bertemu nihh aamiin dehh aku kangen banget ketemu sama kamuu. yasudaa segini dulu ajaa yaaa, maaf kalau kali ini jelekk wkwkkwkw. okeyydee goodnightt yaa sayanggg.. je t'aime bieennn sayangkuu cintakuu. stay with me yaa, Nadine syakiraa prettyyy 💙🩵🤍🤍🤍🤍🤍🤍🤍🩵💙 ");
+            } else {
+                alert('Salah PIN-nya! Hint: masa segitu doang sayang?');
+            }
+        }
+    </script>
+</body>
+</html>
