@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pixel Memory - Nadine Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Outfit:wght@300;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff2a7a;
+            --secondary: #9333ea;
+            --gold: #fbbf24;
+            --text-light: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --cell-empty: rgba(255, 255, 255, 0.08);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0; font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at center, #2e081c 0%, #0f1016 100%);
+            color: var(--text-light); height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            user-select: none;
+        }
+
+        /* MUSIC BTN */
+        #music-btn {
+            position: absolute; top: 20px; right: 20px; z-index: 999;
+            background: rgba(255, 42, 122, 0.2); border: 1px solid var(--primary);
+            width: 45px; height: 45px; border-radius: 50%; display: none;
+            align-items: center; justify-content: center; cursor: pointer;
+            font-size: 20px; backdrop-filter: blur(5px); box-shadow: 0 0 15px rgba(255, 42, 122, 0.4);
+        }
+        .playing { animation: spin 4s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* SCREENS */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 10; padding: 20px; text-align: center;
+        }
+        .screen.active { display: flex; animation: fadeIn 0.6s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* GLASS PANEL */
+        .glass-panel {
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 28px;
+            padding: 30px 20px; width: 100%; max-width: 360px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 20px rgba(255,255,255,0.02);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .title-cursive { font-family: 'Dancing Script', cursive; font-size: 40px; color: var(--primary); text-shadow: 0 0 15px rgba(255, 42, 122, 0.5); margin: 0 0 15px 0; }
+        
+        /* PHOTO FRAME */
+        .photo-frame {
+            width: 160px; height: 160px; border-radius: 20px; background: #000;
+            border: 4px solid #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            margin-bottom: 20px; overflow: hidden; transform: rotate(-3deg); transition: transform 0.3s;
+        }
+        .photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* BUTTONS */
+        .btn-hd {
+            background: linear-gradient(90deg, var(--primary), var(--secondary)); border: none;
+            color: white; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 16px;
+            padding: 14px 35px; border-radius: 50px; cursor: pointer; width: 100%;
+            box-shadow: 0 8px 25px rgba(255, 42, 122, 0.4); transition: transform 0.1s;
+        }
+        .btn-hd:active { transform: scale(0.95); }
+
+        /* PIXEL GRID */
+        .pixel-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px;
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 15px;
+            border: 2px solid var(--glass-border); margin-bottom: 20px; width: 230px; height: 230px;
+        }
+        .pixel-cell {
+            background: var(--cell-empty); border-radius: 4px; width: 100%; height: 100%;
+            transition: background-color 0.2s; cursor: pointer;
+        }
+        
+        /* PALETTE */
+        .palette { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap;}
+        .color-btn {
+            width: 38px; height: 38px; border-radius: 50%; border: 3px solid transparent;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+        }
+        .color-btn.selected { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 15px rgba(255,255,255,0.6); }
+
+        /* TIMER */
+        .timer-text { font-size: 50px; font-weight: 900; color: var(--primary); text-shadow: 0 0 20px var(--primary); margin: 10px 0; }
+        
+        /* LONG TEXT BOX (ENDING) */
+        .letter-box {
+            background: rgba(0,0,0,0.5); padding: 20px; border-radius: 20px;
+            border: 1px dashed var(--primary); width: 100%; max-height: 250px;
+            overflow-y: auto; text-align: left; font-size: 14px; line-height: 1.7;
+            color: #f1f5f9; margin: 15px 0;
+        }
+        .letter-box::-webkit-scrollbar { width: 3px; }
+        .letter-box::-webkit-scrollbar-thumb { background: var(--primary); }
+
+        .particles { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+        .particle { position: absolute; font-size: 20px; animation: floatUp 5s linear forwards; opacity: 0; }
+        @keyframes floatUp { 0% { transform: translateY(100vh) rotate(0deg); opacity: 1; } 100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <audio id="bgm" loop><source src="" type="audio/mpeg"></audio>
+    <div id="music-btn" onclick="toggleMusic()">🎵</div>
+    <div class="particles" id="particles"></div>
+
+    <div id="screen-intro" class="screen active">
+        <div class="glass-panel">
+            <h1 class="title-cursive">Special For This night</h1>
+            <div class="photo-frame">
+                <img src="https://files.catbox.moe/79w5nc.jpg" alt="Nadine">
+            </div>
+            <p style="font-size: 15px; line-height: 1.5; margin-bottom: 25px; opacity: 0.9;">
+                Haii<br>Kamu udaa ngantuk banget yaa, gajadii main gamee kann???.<br>tapii gapapaaa inii ada game spesial buat kamuu<br>
+            </p>
+            <button class="btn-hd" onclick="startGame()">Start</button>
+        </div>
+    </div>
+
+    <div id="screen-memorize" class="screen">
+        <div class="glass-panel">
+            <h2 style="margin-top:0;">INGAT!</h2>
+            <p style="font-size: 13px; color: var(--gold); font-weight: bold; margin-bottom: 10px;">LEVEL <span id="mem-lvl">1</span> / 4</p>
+            <div class="pixel-grid" id="mem-grid"></div>
+            <p style="margin: 0; font-size: 14px; opacity: 0.7;">countdown:</p>
+            <div class="timer-text" id="countdown">10</div>
+        </div>
+    </div>
+
+    <div id="screen-draw" class="screen">
+        <div class="glass-panel">
+            <h2 style="margin-top:0; font-size: 24px;">Susun ulang!!</h2>
+            <p style="font-size: 12px; opacity: 0.7; margin-bottom: 15px;">Semangatt cantikk pasti gaakan remeddd</p>
+            <div class="pixel-grid" id="draw-grid"></div>
+            <div class="palette" id="color-palette"></div>
+            <button class="btn-hd" onclick="checkAnswer()">Result</button>
+        </div>
+    </div>
+
+    <div id="screen-result" class="screen">
+        <div class="glass-panel">
+            <h2 id="res-title" class="title-cursive" style="font-size: 36px;">Result</h2>
+            <p id="res-msg" style="font-size: 14px; margin-bottom: 20px; line-height: 1.5;"></p>
+            <button class="btn-hd" id="res-btn" onclick="nextAction()">Lanjuttt</button>
+        </div>
+    </div>
+
+    <div id="screen-ending" class="screen">
+        <div class="glass-panel" style="max-width: 400px;">
+            <h1 class="title-cursive" style="font-size: 38px; margin-bottom: 5px;">Apretiation gamee</h1>
+            <div class="photo-frame" style="transform: rotate(2deg); width: 140px; height: 140px; border-color: var(--primary);">
+                <img src="https://files.catbox.moe/8aydub.jpg" alt="Us">
+            </div>
+            <div class="letter-box" id="final-letter"></div>
+            <p style="font-size: 12px; opacity: 0.6; margin-top: 5px;">you are the greatest person in my life</p>
+        </div>
+    </div>
+
+    <script>
+        /* =========================================
+           KONFIGURASI (SILAKAN EDIT DI SINI)
+           ========================================= */
+        const linkLaguCatbox = "https://files.catbox.moe/lgmhbq.mp3"; 
+        const volumeLagu = 0.05; 
+
+        const longLetterText = `a little game for youu nadd\n\nkarena malam ini kita gajadi main barengg, jadinyaa aku yang bikin game lagi ajaa..\n\nyaa mungkin jugaa ga bakal banyak teksnyaa inii karenaa game ini di buatt untuk biar kamu bisa main gamee bukan terfokus di longteksss..\n\nyaa tapii terimakasihh banyaakk yaa nadinee udahh menjadii orang terbaikk di hidupkuu, bahkan memaafkanku padahal seharusnyaa sudah tidaa bisa di maafkannn.. masihh memberikan cinta yang setulus tulusnysa meskipun udaa ku kecewakannn berkali kalii, sekali lagii minta maaff yaa kalau im a very very bad person for you, dan always let you downn.. aku bener bener gatau gimana cara bisa membalas semua kebaikanmuu selamaa inii, im so sad bcs kamu harus bertemu dengan orang jahat seperti ak inii huhuhu\n\ndoain ak suksess yaaa biar bisaa membalas semuaa kebaikanmu selamaa iniii, ga perlu nunggu sukses sihh, aku akan berusaha membalas semua kebaikanmu selama inii, dan akan lebih effort untuk mengusahakanmu kedepannyaaa agarr cintanya setaraa samaa kamuuu\n\nbaiklahh selamatt tidurr yaaa selamat beristirahatttt, semogaa besok pagii menjadii harii yang indahh buat kamuuu.. tetapp jadii orangg yang luarr biasaa yaaaaa... je t'aimeee lovee youuu nadine "goat" syakiraaa putriiiii 🤍🤍🤍🤍🤍🤍🤍🤍 `;
+
+        /* =========================================
+           LOGIC GAME (4 LEVEL)
+           ========================================= */
+        const C = { b: 'transparent', r: '#ef4444', p: '#f472b6', g: '#22c55e', y: '#fbbf24', w: '#ffffff', bl: '#3b82f6' };
+
+        const levels = [
+            { name: "Hati", palette: [C.b, C.r, C.w], grid: [C.b, C.r, C.b, C.r, C.b, C.r, C.w, C.r, C.r, C.r, C.r, C.r, C.r, C.r, C.r, C.b, C.r, C.r, C.r, C.b, C.b, C.b, C.r, C.b, C.b] },
+            { name: "Bunga", palette: [C.b, C.p, C.y, C.g], grid: [C.b, C.p, C.b, C.p, C.b, C.p, C.p, C.p, C.p, C.p, C.b, C.p, C.y, C.p, C.b, C.b, C.b, C.g, C.b, C.b, C.b, C.g, C.g, C.g, C.b] },
+            { name: "Bintang", palette: [C.b, C.y, C.bl], grid: [C.b, C.b, C.y, C.b, C.b, C.b, C.y, C.y, C.y, C.b, C.y, C.y, C.bl, C.y, C.y, C.b, C.y, C.y, C.y, C.b, C.b, C.b, C.y, C.b, C.b] },
+            { name: "Mahkota", palette: [C.b, C.y, C.r, C.bl], grid: [C.y, C.b, C.y, C.b, C.y, C.y, C.y, C.y, C.y, C.y, C.r, C.bl, C.y, C.bl, C.r, C.y, C.y, C.y, C.y, C.y, C.y, C.y, C.y, C.y, C.y] }
+        ];
+
+        let currentLevel = 0, selectedColor = '', userGrid = [], passed = false, isMusicPlaying = false;
+        const bgm = document.getElementById('bgm'), musicBtn = document.getElementById('music-btn');
+        bgm.src = linkLaguCatbox; bgm.volume = volumeLagu;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playSfx(type) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            if(type==='pop'){osc.frequency.setValueAtTime(600,now);osc.frequency.exponentialRampToValueAtTime(1200,now+0.1);gain.gain.setValueAtTime(0.1,now);gain.gain.linearRampToValueAtTime(0,now+0.1);osc.start(now);osc.stop(now+0.1);}
+            else if(type==='win'){[523,659,784,1046].forEach((f,i)=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);o.frequency.setValueAtTime(f,now+i*0.1);g.gain.setValueAtTime(0.1,now+i*0.1);g.gain.linearRampToValueAtTime(0,now+i*0.1+0.2);o.start(now+i*0.1);o.stop(now+i*0.1+0.2);});}
+            else if(type==='fail'){osc.frequency.setValueAtTime(200,now);osc.frequency.linearRampToValueAtTime(100,now+0.3);gain.gain.setValueAtTime(0.1,now);gain.gain.linearRampToValueAtTime(0,now+0.3);osc.start(now);osc.stop(now+0.3);}
+        }
+
+        function toggleMusic() { 
+            if(isMusicPlaying){bgm.pause();musicBtn.classList.remove('playing');musicBtn.style.opacity='0.5';} 
+            else{bgm.play();musicBtn.classList.add('playing');musicBtn.style.opacity='1';}
+            isMusicPlaying = !isMusicPlaying;
+        }
+
+        function switchScreen(hide, show) { document.getElementById(hide).classList.remove('active'); document.getElementById(show).classList.add('active'); }
+
+        function startGame() {
+            playSfx('pop');
+            if(linkLaguCatbox.includes("catbox")){ bgm.play().then(()=>{isMusicPlaying=true;musicBtn.style.display='flex';musicBtn.classList.add('playing');}).catch(e=>{}); }
+            createFloatingParticles();
+            loadLevel(0);
+        }
+
+        function loadLevel(idx) {
+            const level = levels[idx];
+            document.getElementById('mem-lvl').innerText = idx + 1;
+            const memGrid = document.getElementById('mem-grid'); memGrid.innerHTML = '';
+            level.grid.forEach(c => { const d = document.createElement('div'); d.className = 'pixel-cell'; d.style.backgroundColor = c==='transparent' ? 'var(--cell-empty)' : c; memGrid.appendChild(d); });
+            switchScreen('screen-intro', 'screen-memorize'); switchScreen('screen-result', 'screen-memorize');
+            let t = 5; document.getElementById('countdown').innerText = t;
+            const timer = setInterval(() => { t--; document.getElementById('countdown').innerText = t; if(t<=0){ clearInterval(timer); startDraw(level); } }, 1000);
+        }
+
+        function startDraw(level) {
+            playSfx('pop'); userGrid = new Array(25).fill('transparent'); selectedColor = level.palette[1];
+            const dg = document.getElementById('draw-grid'); dg.innerHTML = '';
+            for(let i=0; i<25; i++) { const c = document.createElement('div'); c.className = 'pixel-cell'; c.onclick = () => { playSfx('pop'); userGrid[i] = selectedColor; c.style.backgroundColor = selectedColor==='transparent'?'var(--cell-empty)':selectedColor; }; dg.appendChild(c); }
+            const pal = document.getElementById('color-palette'); pal.innerHTML = '';
+            level.palette.forEach(c => { const b = document.createElement('div'); b.className = 'color-btn'+(c===selectedColor?' selected':''); b.style.backgroundColor = c==='transparent'?'#333':c; if(c==='transparent') b.innerHTML = '🧽'; b.style.display='flex'; b.style.alignItems='center'; b.style.justifyContent='center'; b.onclick = () => { playSfx('pop'); document.querySelectorAll('.color-btn').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); selectedColor = c; }; pal.appendChild(b); });
+            switchScreen('screen-memorize', 'screen-draw');
+        }
+
+        function checkAnswer() {
+            const target = levels[currentLevel].grid; let match = 0;
+            for(let i=0; i<25; i++) if(userGrid[i] === target[i]) match++;
+            let acc = (match/25)*100;
+            const title = document.getElementById('res-title'), msg = document.getElementById('res-msg'), btn = document.getElementById('res-btn');
+            switchScreen('screen-draw', 'screen-result');
+            if(acc >= 85) { title.innerText = "Keren ayyyy! ✨"; title.style.color="#4ade80"; msg.innerHTML = `Akurasi kamu <b>${acc}%</b>. woiii sumpahh kerenn bangett, jagoo dalam bidang apapunn ayy`; btn.innerText = "lanjutt ayy"; playSfx('win'); passed = true; } 
+            else { title.innerText = "Its okaaayyy babyy"; title.style.color="#ef4444"; msg.innerHTML = `Akurasi kamu cuma <b>${acc}%</b>. ulang lagii yuuu kamu pastii bisaaa`; btn.innerText = "restart"; playSfx('fail'); passed = false; }
+        }
+
+        function nextAction() {
+            if(passed) { currentLevel++; if(currentLevel < levels.length) loadLevel(currentLevel); else showEnding(); } 
+            else loadLevel(currentLevel);
+        }
+
+        function showEnding() {
+            switchScreen('screen-result', 'screen-ending'); playSfx('win');
+            const el = document.getElementById('final-letter'); el.innerHTML = '';
+            let i = 0; function type() { if(i<longLetterText.length) { el.innerHTML += longLetterText.charAt(i)==='\n'?'<br>':longLetterText.charAt(i); i++; el.scrollTop = el.scrollHeight; setTimeout(type, 40); } }
+            type();
+        }
+
+        function createFloatingParticles() {
+            setInterval(() => {
+                const p = document.createElement('div'); p.className = 'particle';
+                p.innerHTML = ['✨','💖','🌸'][Math.floor(Math.random()*3)];
+                p.style.left = Math.random()*100+'vw'; p.style.animationDuration = (Math.random()*3+3)+'s';
+                document.getElementById('particles').appendChild(p);
+                setTimeout(() => p.remove(), 6000);
+            }, 700);
+        }
+    </script>
+</body>
+</html>
